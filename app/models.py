@@ -1,7 +1,11 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
+
+
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 class MCPIntegration(BaseModel):
@@ -29,7 +33,7 @@ class PersonaVariant(BaseModel):
     rag_config: RAGConfiguration = Field(default_factory=RAGConfiguration)
     mcp_integration: MCPIntegration = Field(default_factory=MCPIntegration)
     status: str = "inactive"  # inactive, active, deployed
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=utc_now_iso)
     last_active: Optional[str] = None
     mission_log: list[str] = Field(default_factory=list)
 

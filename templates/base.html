@@ -32,7 +32,59 @@
         @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
     </style>
 </head>
-<body class="h-full bg-surface-950 text-gray-200">
+<body class="h-full bg-surface-950 text-gray-200" data-app-version="{{ app_version }}" data-testid="app-shell">
+    <div id="app-update-banner" data-testid="app-update-banner" class="hidden fixed bottom-4 right-4 z-[70] max-w-sm rounded-2xl border border-atlas-400/30 bg-surface-800/95 px-4 py-3 shadow-2xl backdrop-blur">
+        <div class="flex items-start gap-3">
+            <div class="mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-atlas-400"></div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-white" data-testid="app-update-banner-title">New version available</p>
+                <p class="mt-1 text-xs text-gray-400" data-testid="app-update-banner-message">Reload to switch to the latest Atlas release.</p>
+            </div>
+            <button id="app-update-reload-button" data-testid="app-update-reload-button" class="rounded-full border border-atlas-400/30 px-3 py-1.5 text-xs font-medium text-atlas-300 transition-colors duration-200 hover:bg-atlas-500/10 hover:text-white">
+                Reload
+            </button>
+        </div>
+    </div>
     {% block body %}{% endblock %}
+    <script>
+        (() => {
+            const currentVersion = document.body.dataset.appVersion;
+            const banner = document.getElementById('app-update-banner');
+            const reloadButton = document.getElementById('app-update-reload-button');
+            let bannerShown = false;
+
+            const showBanner = () => {
+                if (bannerShown || !banner) return;
+                bannerShown = true;
+                banner.classList.remove('hidden');
+            };
+
+            const checkVersion = async () => {
+                try {
+                    const response = await fetch('/api/app-meta', {
+                        cache: 'no-store',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    if (data.version && data.version !== currentVersion) {
+                        showBanner();
+                    }
+                } catch (error) {
+                    console.debug('Version check skipped', error);
+                }
+            };
+
+            reloadButton?.addEventListener('click', () => window.location.reload());
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    checkVersion();
+                }
+            });
+
+            window.setTimeout(checkVersion, 12000);
+            window.setInterval(checkVersion, 30000);
+        })();
+    </script>
 </body>
 </html>

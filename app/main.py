@@ -1,15 +1,13 @@
+import hashlib
 import os
 import secrets
 from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException, Depends, Cookie
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 from dotenv import load_dotenv
-
-from app.models import PersonaVariant, PersonaVariantCreate
-from app.state import state
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = ROOT_DIR / "static"
@@ -18,10 +16,53 @@ TEMPLATES_DIR = ROOT_DIR / "templates"
 load_dotenv(ROOT_DIR / ".env")
 STATIC_DIR.mkdir(exist_ok=True)
 APP_PASSWORD = os.environ["APP_PASSWORD"]
+MONGO_URL = os.environ["MONGO_URL"]
+DB_NAME = os.environ["DB_NAME"]
+
+from app.models import PersonaVariant, PersonaVariantCreate
+from app.state import state
+
+
+def compute_app_version() -> str:
+    tracked_files = sorted(
+        [path for path in ROOT_DIR.glob("app/**/*.py") if path.is_file()]
+        + [path for path in ROOT_DIR.glob("templates/**/*.html") if path.is_file()]
+        + [path for path in ROOT_DIR.glob("tests/**/*.py") if path.is_file()]
+    )
+    digest = hashlib.sha256()
+    for path in tracked_files:
+        stat = path.stat()
+        digest.update(path.relative_to(ROOT_DIR).as_posix().encode())
+        digest.update(str(stat.st_mtime_ns).encode())
+        digest.update(str(stat.st_size).encode())
+    return digest.hexdigest()[:12]
+
+
+APP_VERSION = compute_app_version()
 
 app = FastAPI(title="Atlas AI Orchestration Hub", version="1.0.0")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+
+def render_page(request: Request, template_name: str, context: dict):
+    return templates.TemplateResponse(
+        request,
+        template_name,
+        {
+            **context,
+            "app_version": APP_VERSION,
+            "page_name": Path(template_name).stem,
+        },
+    )
+
+
+def dashboard_snapshot_payload() -> dict:
+    return {
+        "state": state.get_central_state().model_dump(),
+        "variants": [variant.model_dump() for variant in state.list_variants()],
+        "version": APP_VERSION,
+    }
 
 
 def require_auth(session_id: Optional[str] = Cookie(None)):
@@ -36,7 +77,7 @@ def require_auth(session_id: Optional[str] = Cookie(None)):
 async def landing(request: Request, session_id: Optional[str] = Cookie(None)):
     if session_id and state.is_authenticated(session_id):
         return RedirectResponse(url="/dashboard", status_code=302)
-    return templates.TemplateResponse(request, "login.html", {"error": None})
+    return render_page(request, "login.html", {"error": None})
 
 
 @app.post("/auth/login")
@@ -49,7 +90,7 @@ async def login(request: Request):
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie(key="session_id", value=sid, httponly=True, samesite="lax")
         return response
-    return templates.TemplateResponse(request, "login.html", {"error": "Invalid password"})
+    return render_page(request, "login.html", {"error": "Invalid password"})
 
 
 @app.get("/auth/logout")
@@ -67,15 +108,20 @@ async def logout(session_id: Optional[str] = Cookie(None)):
 async def dashboard(request: Request, sid: str = Depends(require_auth)):
     central = state.get_central_state()
     variants = state.list_variants()
-    return templates.TemplateResponse(request, "dashboard.html", {
-        "state": central,
-        "variants": variants,
-    })
+    return render_page(
+        request,
+        "dashboard.html",
+        {
+            "state": central,
+            "variants": variants,
+            "dashboard_snapshot": dashboard_snapshot_payload(),
+        },
+    )
 
 
 @app.get("/variants/new", response_class=HTMLResponse)
 async def new_variant_page(request: Request, sid: str = Depends(require_auth)):
-    return templates.TemplateResponse(request, "variant_form.html", {"variant": None, "edit": False})
+    return render_page(request, "variant_form.html", {"variant": None, "edit": False})
 
 
 @app.get("/variants/{variant_id}", response_class=HTMLResponse)
@@ -83,7 +129,7 @@ async def variant_detail(request: Request, variant_id: str, sid: str = Depends(r
     variant = state.get_variant(variant_id)
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
-    return templates.TemplateResponse(request, "variant_detail.html", {"variant": variant})
+    return render_page(request, "variant_detail.html", {"variant": variant})
 
 
 @app.get("/variants/{variant_id}/edit", response_class=HTMLResponse)
@@ -91,14 +137,29 @@ async def edit_variant_page(request: Request, variant_id: str, sid: str = Depend
     variant = state.get_variant(variant_id)
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
-    return templates.TemplateResponse(request, "variant_form.html", {"variant": variant, "edit": True})
+    return render_page(request, "variant_form.html", {"variant": variant, "edit": True})
 
 
 # --- API Routes ---
 
+@app.get("/api/app-meta")
+async def api_app_meta():
+    return JSONResponse(
+        content={"version": APP_VERSION},
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
+
 @app.get("/api/state")
 async def api_central_state(sid: str = Depends(require_auth)):
     return state.get_central_state()
+
+
+@app.get("/api/dashboard-snapshot")
+async def api_dashboard_snapshot(sid: str = Depends(require_auth)):
+    return JSONResponse(
+        content=dashboard_snapshot_payload(),
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
 
 
 @app.get("/api/variants")
