@@ -4,9 +4,15 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const target = process.env.REACT_APP_BACKEND_URL;
+const port = process.env.PORT;
+const host = process.env.HOST;
 
 if (!target) {
   throw new Error('Missing REACT_APP_BACKEND_URL in /app/frontend/.env');
+}
+
+if (!port || !host) {
+  throw new Error('Missing HOST or PORT environment variables for the preview proxy');
 }
 
 const app = express();
@@ -29,9 +35,6 @@ app.use(
   })
 );
 
-const port = Number(process.env.PORT || 3000);
-const host = process.env.HOST || '0.0.0.0';
-
-app.listen(port, host, () => {
+app.listen(Number(port), host, () => {
   console.log(`Atlas preview proxy listening on http://${host}:${port}`);
 });

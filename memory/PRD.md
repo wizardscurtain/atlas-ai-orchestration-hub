@@ -7,7 +7,9 @@ APP_PASSWORD: Set this to AtlasMaster2026
 
 Run tests
 
-Follow-up request: add persistent storage and versioning so current users do not need to hard refresh.
+Follow-up requests:
+- add persistent storage and versioning so current users do not need to hard refresh
+- make the preview/staging environment work correctly here in Emergent
 
 ## User Choices
 - Database: MongoDB
@@ -16,35 +18,37 @@ Follow-up request: add persistent storage and versioning so current users do not
 - Existing data: migrate existing in-memory data if possible during this update
 
 ## Architecture Decisions
-- Kept the existing FastAPI + Jinja server-rendered architecture.
-- Switched app state from in-memory dictionaries/sets to MongoDB collections using `MONGO_URL` and `DB_NAME`.
-- Kept a compatibility layer so existing tests and state access patterns continue to work.
-- Added a lightweight app-version check endpoint and client-side polling banner for release detection.
-- Added dashboard polling against a snapshot endpoint so live data refreshes without a hard reload.
-- API auth failures now return JSON 401 for `/api/*` paths while browser pages still redirect to login.
+- Kept the core app as a single FastAPI + Jinja server-rendered application.
+- Added MongoDB-backed persistence for variants and sessions.
+- Added app-version detection and dashboard snapshot polling for live updates.
+- To match Emergent staging expectations, added a lightweight `/app/backend/server.py` wrapper and a `/app/frontend` proxy app so supervisor can run the project in the expected split layout without rewriting the product.
+- Frontend proxy now requires explicit env values and forwards browser traffic to the FastAPI app.
 
 ## What's Implemented
-- Root `.env` now includes `APP_PASSWORD`, `MONGO_URL`, and `DB_NAME`.
-- `app/state.py` now persists variants, sessions, and mission logs in MongoDB.
-- Sessions remain valid across fresh state instances because they are stored in MongoDB.
-- Added `/api/app-meta` for version detection and `/api/dashboard-snapshot` for live dashboard refresh.
-- Added a global update banner in the base template and auto-sync on the dashboard.
-- Added/updated backend regression tests for persistence and versioning.
+- Root `.env` includes `APP_PASSWORD`, `MONGO_URL`, and `DB_NAME`.
+- `app/state.py` persists variants, sessions, and mission logs in MongoDB.
+- Added `/api/app-meta` and `/api/dashboard-snapshot` for version checks and live dashboard refresh.
+- Added a global update banner and dashboard auto-sync.
+- Created `/app/backend/server.py` so supervisor’s backend command can start the existing FastAPI app.
+- Created `/app/frontend` with a small proxy server and env config so preview/staging routes load correctly on port 3000.
+- Added/expanded regression tests for env loading, persistence, versioning, and staging wrappers.
+- Added missing `data-testid` attributes to login controls and improved login footer contrast.
+- Verified live preview loads successfully and login UI is visible.
 - Full backend suite passes: 37 tests.
 
 ## Prioritized Backlog
 ### P0
-- Align runtime/deployment process configuration with this single FastAPI app structure.
+- None currently blocking the preview environment.
 
 ### P1
-- If a live in-memory export is ever available before restart, add a one-time import utility for legacy runtime state.
-- Add optional session expiry / cleanup policy for old sessions.
+- Add live auto-refresh on variant detail pages, not just the dashboard.
+- Add session expiry / cleanup for old session records.
 
 ### P2
-- Add live refresh for variant detail pages as well, not just the dashboard.
-- Add small admin diagnostics page for env/version/database health.
+- Add a small operator system-status panel for database health, app version, and sync state.
+- Add a one-time import tool if legacy runtime-only data ever needs explicit migration.
 
 ## Next Tasks
-- Fix the process/startup wiring so the hosted app starts from the correct app entrypoint.
-- Optionally add a one-click manual “refresh data now” action for operators.
-- Optionally add persistent audit timestamps and user attribution if multi-user access is introduced.
+- If desired, extend live sync behavior to detail/edit screens.
+- Add richer e2e coverage for the authenticated dashboard flows using the new stable test IDs.
+- Optionally improve the login experience with clearer help text or secret rotation controls.
