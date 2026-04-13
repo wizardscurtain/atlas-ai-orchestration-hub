@@ -17,7 +17,7 @@
     </nav>
 
     <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
-        <form method="POST" action="{% if edit %}/api/variants/{{ variant.id }}{% else %}/api/variants{% endif %}" class="space-y-8">
+        <form method="POST" action="{% if edit %}/api/variants/{{ variant.id }}{% else %}/api/variants{% endif %}" class="space-y-8" data-testid="variant-form">
 
             <!-- Identity Section -->
             <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-6">
@@ -28,14 +28,14 @@
                 <div class="space-y-5">
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Variant Name</label>
-                        <input type="text" name="name" id="name" required
+                        <input type="text" name="name" id="name" required data-testid="variant-name-input"
                             value="{{ variant.name if variant else '' }}"
                             class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
                             placeholder="e.g., Security Sweep Alpha">
                     </div>
                     <div>
                         <label for="persona_identity" class="block text-sm font-medium text-gray-300 mb-2">Persona Identity</label>
-                        <textarea name="persona_identity" id="persona_identity" rows="4" required
+                        <textarea name="persona_identity" id="persona_identity" rows="4" required data-testid="variant-persona-textarea"
                             class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition resize-y"
                             placeholder="Describe the persona's role, expertise, behavioral traits, and mission parameters…">{{ variant.persona_identity if variant else '' }}</textarea>
                     </div>
@@ -50,13 +50,13 @@
                 </h3>
                 <div class="space-y-5">
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" name="rag_enabled" class="w-4 h-4 rounded bg-surface-950 border-gray-600 text-atlas-500 focus:ring-atlas-500 focus:ring-offset-0"
+                        <input type="checkbox" name="rag_enabled" data-testid="variant-rag-enabled-checkbox" class="w-4 h-4 rounded bg-surface-950 border-gray-600 text-atlas-500 focus:ring-atlas-500 focus:ring-offset-0"
                             {{ 'checked' if variant and variant.rag_config.enabled else '' }}>
                         <span class="text-sm text-gray-300">Enable RAG Pipeline</span>
                     </label>
                     <div>
                         <label class="block text-sm font-medium text-gray-300 mb-2">Endpoint URL</label>
-                        <input type="url" name="rag_endpoint_url"
+                        <input type="url" name="rag_endpoint_url" data-testid="variant-rag-endpoint-input"
                             value="{{ variant.rag_config.endpoint_url if variant else '' }}"
                             class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
                             placeholder="https://your-vector-db.example.com/api">
@@ -64,14 +64,14 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
-                            <input type="password" name="rag_api_key"
+                            <input type="password" name="rag_api_key" data-testid="variant-rag-api-key-input"
                                 value="{{ variant.rag_config.api_key if variant else '' }}"
                                 class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
                                 placeholder="sk-...">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">Collection Name</label>
-                            <input type="text" name="rag_collection_name"
+                            <input type="text" name="rag_collection_name" data-testid="variant-rag-collection-input"
                                 value="{{ variant.rag_config.collection_name if variant else '' }}"
                                 class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
                                 placeholder="security-intel">
@@ -100,7 +100,7 @@
                     ] %}
                     {% for field, label, desc in tools %}
                     <label class="flex items-start gap-3 p-3 rounded-lg bg-surface-950/50 border border-gray-700/30 hover:border-atlas-500/30 cursor-pointer transition">
-                        <input type="checkbox" name="{{ field }}" class="mt-0.5 w-4 h-4 rounded bg-surface-950 border-gray-600 text-atlas-500 focus:ring-atlas-500 focus:ring-offset-0"
+                        <input type="checkbox" name="{{ field }}" data-testid="{{ field }}-checkbox" class="mt-0.5 w-4 h-4 rounded bg-surface-950 border-gray-600 text-atlas-500 focus:ring-atlas-500 focus:ring-offset-0"
                             {% if variant %}
                                 {% set mcp = variant.mcp_integration %}
                                 {% if field == 'mcp_web_search' and mcp.web_search %}checked{% endif %}
@@ -123,8 +123,8 @@
 
             <!-- Submit -->
             <div class="flex items-center justify-end gap-3">
-                <a href="/dashboard" class="px-5 py-2.5 text-sm text-gray-400 hover:text-white transition">Cancel</a>
-                <button type="submit" class="px-6 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
+                <a href="/dashboard" data-testid="variant-form-cancel-link" class="px-5 py-2.5 text-sm text-gray-400 hover:text-white transition">Cancel</a>
+                <button type="submit" data-testid="variant-form-submit-button" class="px-6 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
                     {% if edit %}Update Variant{% else %}Create Variant{% endif %}
                 </button>
             </div>
