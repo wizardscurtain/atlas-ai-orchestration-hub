@@ -1,18 +1,27 @@
+import os
 import secrets
-from fastapi import FastAPI, Request, Response, HTTPException, Depends, Cookie
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from pathlib import Path
+from fastapi import FastAPI, Request, HTTPException, Depends, Cookie
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from typing import Optional
+from dotenv import load_dotenv
 
-from app.models import PersonaVariant, PersonaVariantCreate, PersonaVariantUpdate
+from app.models import PersonaVariant, PersonaVariantCreate
 from app.state import state
 
-APP_PASSWORD = "AtlasMaster2026"
+ROOT_DIR = Path(__file__).resolve().parents[1]
+STATIC_DIR = ROOT_DIR / "static"
+TEMPLATES_DIR = ROOT_DIR / "templates"
+
+load_dotenv(ROOT_DIR / ".env")
+STATIC_DIR.mkdir(exist_ok=True)
+APP_PASSWORD = os.environ["APP_PASSWORD"]
 
 app = FastAPI(title="Atlas AI Orchestration Hub", version="1.0.0")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
 def require_auth(session_id: Optional[str] = Cookie(None)):
