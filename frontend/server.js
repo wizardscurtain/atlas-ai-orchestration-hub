@@ -3,12 +3,12 @@ require('dotenv').config();
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-const target = process.env.REACT_APP_BACKEND_URL;
+const target = process.env.BACKEND_PROXY_TARGET;
 const port = process.env.PORT;
 const host = process.env.HOST;
 
 if (!target) {
-  throw new Error('Missing REACT_APP_BACKEND_URL in /app/frontend/.env');
+  throw new Error('Missing BACKEND_PROXY_TARGET in /app/frontend/.env');
 }
 
 if (!port || !host) {

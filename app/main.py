@@ -13,7 +13,10 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 STATIC_DIR = ROOT_DIR / "static"
 TEMPLATES_DIR = ROOT_DIR / "templates"
 
-load_dotenv(ROOT_DIR / ".env")
+for env_path in (ROOT_DIR / "backend" / ".env", ROOT_DIR / ".env"):
+    if env_path.exists():
+        load_dotenv(env_path)
+
 STATIC_DIR.mkdir(exist_ok=True)
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 MONGO_URL = os.environ["MONGO_URL"]
