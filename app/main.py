@@ -65,6 +65,13 @@ def dashboard_snapshot_payload() -> dict:
     }
 
 
+def variant_snapshot_payload(variant_id: str) -> dict | None:
+    variant = state.get_variant(variant_id)
+    if not variant:
+        return None
+    return {"variant": variant.model_dump(), "version": APP_VERSION}
+
+
 def require_auth(session_id: Optional[str] = Cookie(None)):
     if not session_id or not state.is_authenticated(session_id):
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -115,13 +122,26 @@ async def dashboard(request: Request, sid: str = Depends(require_auth)):
             "state": central,
             "variants": variants,
             "dashboard_snapshot": dashboard_snapshot_payload(),
+            "show_sync_status": True,
+            "sync_status_scope": "Fleet data sync",
+            "sync_mode": "dashboard",
         },
     )
 
 
 @app.get("/variants/new", response_class=HTMLResponse)
 async def new_variant_page(request: Request, sid: str = Depends(require_auth)):
-    return render_page(request, "variant_form.html", {"variant": None, "edit": False})
+    return render_page(
+        request,
+        "variant_form.html",
+        {
+            "variant": None,
+            "edit": False,
+            "show_sync_status": True,
+            "sync_status_scope": "App sync",
+            "sync_mode": "app-meta",
+        },
+    )
 
 
 @app.get("/variants/{variant_id}", response_class=HTMLResponse)
@@ -129,7 +149,17 @@ async def variant_detail(request: Request, variant_id: str, sid: str = Depends(r
     variant = state.get_variant(variant_id)
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
-    return render_page(request, "variant_detail.html", {"variant": variant})
+    return render_page(
+        request,
+        "variant_detail.html",
+        {
+            "variant": variant,
+            "show_sync_status": True,
+            "sync_status_scope": "Variant sync",
+            "sync_mode": "variant-detail",
+            "sync_variant_id": variant.id,
+        },
+    )
 
 
 @app.get("/variants/{variant_id}/edit", response_class=HTMLResponse)
@@ -137,7 +167,17 @@ async def edit_variant_page(request: Request, variant_id: str, sid: str = Depend
     variant = state.get_variant(variant_id)
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
-    return render_page(request, "variant_form.html", {"variant": variant, "edit": True})
+    return render_page(
+        request,
+        "variant_form.html",
+        {
+            "variant": variant,
+            "edit": True,
+            "show_sync_status": True,
+            "sync_status_scope": "App sync",
+            "sync_mode": "app-meta",
+        },
+    )
 
 
 # --- API Routes ---
@@ -158,6 +198,17 @@ async def api_central_state(sid: str = Depends(require_auth)):
 async def api_dashboard_snapshot(sid: str = Depends(require_auth)):
     return JSONResponse(
         content=dashboard_snapshot_payload(),
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
+
+
+@app.get("/api/variants/{variant_id}/snapshot")
+async def api_variant_snapshot(variant_id: str, sid: str = Depends(require_auth)):
+    payload = variant_snapshot_payload(variant_id)
+    if not payload:
+        raise HTTPException(status_code=404, detail="Variant not found")
+    return JSONResponse(
+        content=payload,
         headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
     )
 

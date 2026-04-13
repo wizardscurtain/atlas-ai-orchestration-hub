@@ -76,3 +76,43 @@ def test_dashboard_snapshot_requires_auth_and_returns_live_data(client):
     assert data["version"] == APP_VERSION
     assert data["state"]["total_variants"] == 1
     assert data["variants"][0]["name"] == "Live Grid"
+
+
+def test_variant_snapshot_requires_auth_and_returns_live_data(client):
+    variant = PersonaVariant(name="Signal Watch", persona_identity="Detail sync target")
+    state.add_variant(variant)
+
+    unauthenticated = client.get(f"/api/variants/{variant.id}/snapshot", follow_redirects=False)
+    assert unauthenticated.status_code == 401
+
+    login = client.post("/auth/login", data={"password": APP_PASSWORD}, follow_redirects=False)
+    assert login.status_code == 302
+
+    state.activate_variant(variant.id)
+    snapshot = client.get(f"/api/variants/{variant.id}/snapshot")
+
+    assert snapshot.status_code == 200
+    data = snapshot.json()
+    assert data["version"] == APP_VERSION
+    assert data["variant"]["id"] == variant.id
+    assert data["variant"]["status"] == "active"
+    assert len(data["variant"]["mission_log"]) == 1
+
+
+def test_authenticated_pages_render_sync_status_panel(client):
+    login = client.post("/auth/login", data={"password": APP_PASSWORD}, follow_redirects=False)
+    assert login.status_code == 302
+
+    variant = PersonaVariant(name="Sync Ready", persona_identity="Page sync target")
+    state.add_variant(variant)
+
+    dashboard = client.get("/dashboard")
+    detail = client.get(f"/variants/{variant.id}")
+    form_page = client.get("/variants/new")
+
+    assert 'data-testid="sync-status-panel"' in dashboard.text
+    assert 'data-sync-mode="dashboard"' in dashboard.text
+    assert 'data-testid="sync-status-panel"' in detail.text
+    assert 'data-sync-mode="variant-detail"' in detail.text
+    assert 'data-testid="sync-status-panel"' in form_page.text
+    assert 'data-sync-mode="app-meta"' in form_page.text

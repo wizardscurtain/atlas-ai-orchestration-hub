@@ -32,7 +32,20 @@
         @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
     </style>
 </head>
-<body class="h-full bg-surface-950 text-gray-200" data-app-version="{{ app_version }}" data-testid="app-shell">
+<body class="h-full bg-surface-950 text-gray-200" data-app-version="{{ app_version }}" data-page-name="{{ page_name }}" data-sync-mode="{{ sync_mode if sync_mode else '' }}" data-sync-variant-id="{{ sync_variant_id if sync_variant_id else '' }}" data-testid="app-shell">
+    {% if show_sync_status %}
+    <div id="sync-status-panel" data-testid="sync-status-panel" class="fixed right-4 top-20 z-[65] w-[240px] rounded-2xl border border-atlas-500/20 bg-surface-800/92 p-4 shadow-2xl backdrop-blur">
+        <div class="flex items-start gap-3">
+            <span id="sync-status-dot" class="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-amber-400"></span>
+            <div class="min-w-0 flex-1">
+                <p class="text-xs uppercase tracking-[0.24em] text-atlas-200/70" data-testid="sync-status-label">{{ sync_status_scope or 'Sync status' }}</p>
+                <p id="sync-status-state" data-testid="sync-status-state" class="mt-1 text-sm font-semibold text-white">Waiting for first sync</p>
+                <p id="sync-status-message" data-testid="sync-status-message" class="mt-1 text-xs text-gray-400">Live sync will report here.</p>
+                <p id="sync-status-last-success" data-testid="sync-status-last-success" class="mt-2 text-[11px] text-gray-500">Last successful sync: not yet recorded</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     <div id="app-update-banner" data-testid="app-update-banner" class="hidden fixed bottom-4 right-4 z-[70] max-w-sm rounded-2xl border border-atlas-400/30 bg-surface-800/95 px-4 py-3 shadow-2xl backdrop-blur">
         <div class="flex items-start gap-3">
             <div class="mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-atlas-400"></div>
@@ -49,9 +62,48 @@
     <script>
         (() => {
             const currentVersion = document.body.dataset.appVersion;
+            const syncMode = document.body.dataset.syncMode;
             const banner = document.getElementById('app-update-banner');
             const reloadButton = document.getElementById('app-update-reload-button');
+            const syncPanel = document.getElementById('sync-status-panel');
+            const syncDot = document.getElementById('sync-status-dot');
+            const syncState = document.getElementById('sync-status-state');
+            const syncMessage = document.getElementById('sync-status-message');
+            const syncLastSuccess = document.getElementById('sync-status-last-success');
             let bannerShown = false;
+            let lastSuccessLabel = 'not yet recorded';
+
+            const syncDotClasses = ['bg-amber-400', 'bg-emerald-400', 'bg-red-400'];
+
+            const formatSyncTime = () => new Date().toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            const setSyncStatus = (status, message, markSuccess = false) => {
+                if (!syncPanel || !syncState || !syncMessage || !syncLastSuccess || !syncDot) return;
+                syncDot.classList.remove(...syncDotClasses);
+                if (status === 'success') {
+                    syncDot.classList.add('bg-emerald-400');
+                    syncState.textContent = 'Synced';
+                    if (markSuccess) {
+                        lastSuccessLabel = formatSyncTime();
+                    }
+                } else if (status === 'error') {
+                    syncDot.classList.add('bg-red-400');
+                    syncState.textContent = 'Sync issue';
+                } else {
+                    syncDot.classList.add('bg-amber-400');
+                    syncState.textContent = 'Syncing';
+                }
+                syncMessage.textContent = message;
+                syncLastSuccess.textContent = `Last successful sync: ${lastSuccessLabel}`;
+            };
+
+            window.AtlasSyncStatus = {
+                setSyncStatus,
+            };
 
             const showBanner = () => {
                 if (bannerShown || !banner) return;
@@ -81,6 +133,28 @@
                     checkVersion();
                 }
             });
+
+            if (syncPanel && syncMode === 'app-meta') {
+                const refreshMetaSync = async () => {
+                    setSyncStatus('syncing', 'Checking app freshness...');
+                    try {
+                        const response = await fetch('/api/app-meta', {
+                            cache: 'no-store',
+                            headers: { 'Cache-Control': 'no-cache' }
+                        });
+                        if (!response.ok) {
+                            throw new Error(`Status ${response.status}`);
+                        }
+                        await response.json();
+                        setSyncStatus('success', 'App updates are being monitored.', true);
+                    } catch (error) {
+                        setSyncStatus('error', 'Could not confirm the latest app version.');
+                    }
+                };
+
+                window.setTimeout(refreshMetaSync, 2000);
+                window.setInterval(refreshMetaSync, 20000);
+            }
 
             window.setTimeout(checkVersion, 12000);
             window.setInterval(checkVersion, 30000);

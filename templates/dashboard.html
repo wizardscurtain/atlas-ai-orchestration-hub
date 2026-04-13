@@ -15,11 +15,6 @@
                     <span class="text-lg font-semibold text-white">Atlas Command Center</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="hidden sm:flex items-center gap-3 rounded-full border border-atlas-500/20 bg-atlas-500/5 px-3 py-1.5 text-xs text-atlas-200">
-                        <span data-testid="dashboard-live-sync-indicator">Auto-sync on</span>
-                        <span class="text-atlas-400/60">•</span>
-                        <span id="dashboard-last-sync" data-testid="dashboard-last-sync">Waiting for sync</span>
-                    </div>
                     <span class="flex items-center gap-2 text-sm text-green-400">
                         <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
                         {{ state.system_health | capitalize }}
@@ -134,8 +129,6 @@
             rag: document.getElementById('stat-rag-endpoints')
         };
         const variantsCollection = document.getElementById('variants-collection');
-        const lastSync = document.getElementById('dashboard-last-sync');
-
         const escapeHtml = (value) => String(value ?? '')
             .replaceAll('&', '&amp;')
             .replaceAll('<', '&lt;')
@@ -230,24 +223,27 @@
             stats.tools.textContent = state.total_mcp_tools_enabled ?? 0;
             stats.rag.textContent = state.rag_endpoints_configured ?? 0;
             renderVariants(variants);
-            if (lastSync) {
-                lastSync.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            }
+            window.AtlasSyncStatus?.setSyncStatus('success', 'Fleet data is up to date.', true);
         };
 
         const refreshDashboard = async () => {
+            window.AtlasSyncStatus?.setSyncStatus('syncing', 'Refreshing fleet data...');
             try {
                 const response = await fetch('/api/dashboard-snapshot', {
                     cache: 'no-store',
                     headers: { 'Cache-Control': 'no-cache' }
                 });
-                if (!response.ok) return;
+                if (!response.ok) {
+                    throw new Error(`Status ${response.status}`);
+                }
                 applySnapshot(await response.json());
             } catch (error) {
                 console.debug('Dashboard sync skipped', error);
+                window.AtlasSyncStatus?.setSyncStatus('error', 'Fleet data refresh failed. Retrying soon.');
             }
         };
 
+        window.AtlasSyncStatus?.setSyncStatus('syncing', 'Preparing fleet sync...');
         window.setTimeout(refreshDashboard, 4000);
         window.setInterval(refreshDashboard, 15000);
     })();
