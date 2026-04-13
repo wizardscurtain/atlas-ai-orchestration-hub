@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Atlas — Command Center{% endblock %}
+{% block body %}
+<div class="min-h-full">
+    <!-- Top Nav -->
+    <nav class="bg-surface-800/80 backdrop-blur border-b border-gray-700/50 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-atlas-700/20 border border-atlas-600/30 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-atlas-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                        </svg>
+                    </div>
+                    <span class="text-lg font-semibold text-white">Atlas Command Center</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-2 text-sm text-green-400">
+                        <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
+                        {{ state.system_health | capitalize }}
+                    </span>
+                    <a href="/auth/logout" class="text-sm text-gray-400 hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-gray-700/50">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 fade-in">
+            <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-5">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Total Drones</p>
+                <p class="text-2xl font-bold text-white">{{ state.total_variants }}</p>
+            </div>
+            <div class="bg-surface-800 rounded-xl border border-green-500/20 p-5 glow-green">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Active</p>
+                <p class="text-2xl font-bold text-green-400">{{ state.active_variants }}</p>
+            </div>
+            <div class="bg-surface-800 rounded-xl border border-blue-500/20 p-5 glow-blue">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Deployed</p>
+                <p class="text-2xl font-bold text-blue-400">{{ state.deployed_variants }}</p>
+            </div>
+            <div class="bg-surface-800 rounded-xl border border-amber-500/20 p-5 glow-amber">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">MCP Tools</p>
+                <p class="text-2xl font-bold text-amber-400">{{ state.total_mcp_tools_enabled }}</p>
+            </div>
+            <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-5">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">RAG Endpoints</p>
+                <p class="text-2xl font-bold text-white">{{ state.rag_endpoints_configured }}</p>
+            </div>
+        </div>
+
+        <!-- Header + Action -->
+        <div class="flex items-center justify-between mb-6 fade-in">
+            <div>
+                <h2 class="text-xl font-semibold text-white">Persona Variants</h2>
+                <p class="text-sm text-gray-400 mt-1">Manage your specialized AI drone fleet</p>
+            </div>
+            <a href="/variants/new"
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                New Variant
+            </a>
+        </div>
+
+        <!-- Variants Grid -->
+        {% if variants %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
+            {% for v in variants %}
+            <a href="/variants/{{ v.id }}" class="card-hover bg-surface-800 rounded-xl border border-gray-700/50 p-5 block">
+                <div class="flex items-start justify-between mb-3">
+                    <h3 class="font-semibold text-white text-lg truncate pr-2">{{ v.name }}</h3>
+                    {% if v.status == 'active' %}
+                    <span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full pulse-dot"></span>Active
+                    </span>
+                    {% elif v.status == 'deployed' %}
+                    <span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <span class="w-1.5 h-1.5 bg-blue-400 rounded-full pulse-dot"></span>Deployed
+                    </span>
+                    {% else %}
+                    <span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                        Inactive
+                    </span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-400 line-clamp-2 mb-4">{{ v.persona_identity[:120] }}{% if v.persona_identity|length > 120 %}…{% endif %}</p>
+                <div class="flex items-center gap-3 text-xs text-gray-500">
+                    {% set tool_count = [v.mcp_integration.web_search, v.mcp_integration.file_analysis, v.mcp_integration.email_integration, v.mcp_integration.calendar_sync, v.mcp_integration.code_execution, v.mcp_integration.data_extraction, v.mcp_integration.image_generation, v.mcp_integration.memory_access] | select | list | length %}
+                    <span class="flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.1-5.1m0 0L11.42 5M6.32 10.07h11.36"/></svg>
+                        {{ tool_count }} tools
+                    </span>
+                    {% if v.rag_config.enabled %}
+                    <span class="flex items-center gap-1 text-atlas-400">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>
+                        RAG
+                    </span>
+                    {% endif %}
+                    <span class="ml-auto">Created {{ v.created_at[:10] }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-surface-800 rounded-xl border border-gray-700/50 border-dashed p-16 text-center fade-in">
+            <svg class="w-12 h-12 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+            </svg>
+            <p class="text-gray-400 mb-2">No persona variants yet</p>
+            <p class="text-sm text-gray-500 mb-6">Create your first AI drone to get started</p>
+            <a href="/variants/new" class="inline-flex items-center gap-2 px-5 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Create First Variant
+            </a>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
