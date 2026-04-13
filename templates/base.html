@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Atlas AI Orchestration Hub{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        atlas: { 50:'#eef7ff', 100:'#d9ecff', 200:'#bcdfff', 300:'#8eccff', 400:'#53afff', 500:'#2b8fff', 600:'#1470f5', 700:'#0d59e1', 800:'#1148b6', 900:'#143f8f', 950:'#0f2757' },
+                        surface: { 800:'#1a1e2e', 900:'#0f1320', 950:'#080b14' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glow { box-shadow: 0 0 20px rgba(43,143,255,0.15); }
+        .glow-green { box-shadow: 0 0 12px rgba(34,197,94,0.3); }
+        .glow-amber { box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+        .glow-blue { box-shadow: 0 0 12px rgba(59,130,246,0.3); }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body class="h-full bg-surface-950 text-gray-200">
+    {% block body %}{% endblock %}
+</body>
+</html>
