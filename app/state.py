@@ -1,9 +1,18 @@
 import os
 import time
+from pathlib import Path
 
 from pymongo import ASCENDING, MongoClient
+from dotenv import load_dotenv
 
 from app.models import CentralState, PersonaVariant, utc_now_iso
+
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if "MONGO_URL" not in os.environ or "DB_NAME" not in os.environ:
+    for env_path in (ROOT_DIR / "backend" / ".env", ROOT_DIR / ".env"):
+        if env_path.exists():
+            load_dotenv(env_path)
 
 
 class VariantStoreProxy:

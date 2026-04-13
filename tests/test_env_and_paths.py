@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+import subprocess
+import sys
 
 from dotenv import dotenv_values
 from fastapi.testclient import TestClient
@@ -37,3 +39,18 @@ def test_template_and_static_use_stable_project_paths():
     assert STATIC_DIR == Path("/app/static")
     assert TEMPLATES_DIR.exists()
     assert STATIC_DIR.exists()
+
+
+def test_state_module_can_import_without_preloaded_env_vars():
+    env = {key: value for key, value in os.environ.items() if key not in {"MONGO_URL", "DB_NAME"}}
+    result = subprocess.run(
+        [sys.executable, "-c", "import app.state; print('STATE_IMPORT_OK')"],
+        cwd="/app",
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "STATE_IMPORT_OK" in result.stdout
