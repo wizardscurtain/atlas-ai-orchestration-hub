@@ -60,6 +60,17 @@ def test_app_meta_is_public_and_uses_current_version(client):
     assert response.json()["version"] == APP_VERSION
 
 
+def test_health_endpoint_is_public_and_reports_ok(client):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store, no-cache, must-revalidate"
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["version"] == APP_VERSION
+    assert payload["mongo"] in {"deferred", "connected", "unavailable"}
+
+
 def test_dashboard_snapshot_requires_auth_and_returns_live_data(client):
     unauthenticated = client.get("/api/dashboard-snapshot", follow_redirects=False)
     assert unauthenticated.status_code == 401

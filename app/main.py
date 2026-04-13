@@ -192,6 +192,26 @@ async def api_app_meta():
         headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
     )
 
+
+@app.get("/health")
+async def health_check():
+    mongo_status = "deferred"
+    if state.client is not None:
+        try:
+            state.client.admin.command("ping")
+            mongo_status = "connected"
+        except Exception:
+            mongo_status = "unavailable"
+
+    return JSONResponse(
+        content={
+            "status": "ok",
+            "version": APP_VERSION,
+            "mongo": mongo_status,
+        },
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
+
 @app.get("/api/state")
 async def api_central_state(sid: str = Depends(require_auth)):
     return state.get_central_state()
