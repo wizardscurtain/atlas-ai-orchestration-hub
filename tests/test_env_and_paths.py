@@ -54,3 +54,14 @@ def test_state_module_can_import_without_preloaded_env_vars():
 
     assert result.returncode == 0
     assert "STATE_IMPORT_OK" in result.stdout
+
+
+def test_login_markup_exposes_test_ids_and_improved_footer_contrast():
+    client = TestClient(app)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'data-testid="login-password-input"' in response.text
+    assert 'data-testid="login-submit-button"' in response.text
+    assert 'data-testid="login-footer-copy"' in response.text
+    assert 'text-gray-400' in response.text
