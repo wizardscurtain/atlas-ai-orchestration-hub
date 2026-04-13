@@ -269,4 +269,6 @@ async def api_delete(variant_id: str, sid: str = Depends(require_auth)):
 
 @app.exception_handler(401)
 async def auth_exception_handler(request: Request, exc: HTTPException):
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(status_code=401, content={"detail": exc.detail or "Not authenticated"})
     return RedirectResponse(url="/", status_code=302)

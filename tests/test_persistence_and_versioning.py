@@ -62,7 +62,8 @@ def test_app_meta_is_public_and_uses_current_version(client):
 
 def test_dashboard_snapshot_requires_auth_and_returns_live_data(client):
     unauthenticated = client.get("/api/dashboard-snapshot", follow_redirects=False)
-    assert unauthenticated.status_code in (302, 401)
+    assert unauthenticated.status_code == 401
+    assert unauthenticated.json()["detail"] == "Not authenticated"
 
     login = client.post("/auth/login", data={"password": APP_PASSWORD}, follow_redirects=False)
     assert login.status_code == 302
