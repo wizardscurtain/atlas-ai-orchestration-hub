@@ -101,6 +101,7 @@ async def api_list_variants(sid: str = Depends(require_auth)):
 @app.post("/api/variants")
 async def api_create_variant(request: Request, sid: str = Depends(require_auth)):
     form = await request.form()
+    
     mcp_data = {
         "web_search": form.get("mcp_web_search") == "on",
         "file_analysis": form.get("mcp_file_analysis") == "on",
@@ -118,17 +119,15 @@ async def api_create_variant(request: Request, sid: str = Depends(require_auth))
         "enabled": form.get("rag_enabled") == "on",
     }
     from app.models import MCPIntegration, RAGConfiguration
-    create = PersonaVariantCreate(
-        name=form.get("name", ""),
-        persona_identity=form.get("persona_identity", ""),
+    
+    name = form.get("name") or form.get("variant_name") or "Unnamed Drone"
+    identity = form.get("persona_identity") or "No identity description provided."
+    
+    variant = PersonaVariant(
+        name=name,
+        persona_identity=identity,
         rag_config=RAGConfiguration(**rag_data),
         mcp_integration=MCPIntegration(**mcp_data),
-    )
-    variant = PersonaVariant(
-        name=create.name,
-        persona_identity=create.persona_identity,
-        rag_config=create.rag_config,
-        mcp_integration=create.mcp_integration,
     )
     state.add_variant(variant)
     return RedirectResponse(url="/dashboard", status_code=303)
@@ -158,7 +157,7 @@ async def api_update_variant(request: Request, variant_id: str, sid: str = Depen
         "enabled": form.get("rag_enabled") == "on",
     }
     updates = {
-        "name": form.get("name"),
+        "name": form.get("name") or form.get("variant_name"),
         "persona_identity": form.get("persona_identity"),
         "rag_config": RAGConfiguration(**rag_data),
         "mcp_integration": MCPIntegration(**mcp_data),
