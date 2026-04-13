@@ -36,7 +36,7 @@ def require_auth(session_id: Optional[str] = Cookie(None)):
 async def landing(request: Request, session_id: Optional[str] = Cookie(None)):
     if session_id and state.is_authenticated(session_id):
         return RedirectResponse(url="/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
 @app.post("/auth/login")
@@ -49,7 +49,7 @@ async def login(request: Request):
         response = RedirectResponse(url="/dashboard", status_code=302)
         response.set_cookie(key="session_id", value=sid, httponly=True, samesite="lax")
         return response
-    return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid password"})
+    return templates.TemplateResponse(request, "login.html", {"error": "Invalid password"})
 
 
 @app.get("/auth/logout")
@@ -67,8 +67,7 @@ async def logout(session_id: Optional[str] = Cookie(None)):
 async def dashboard(request: Request, sid: str = Depends(require_auth)):
     central = state.get_central_state()
     variants = state.list_variants()
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "dashboard.html", {
         "state": central,
         "variants": variants,
     })
@@ -76,7 +75,7 @@ async def dashboard(request: Request, sid: str = Depends(require_auth)):
 
 @app.get("/variants/new", response_class=HTMLResponse)
 async def new_variant_page(request: Request, sid: str = Depends(require_auth)):
-    return templates.TemplateResponse("variant_form.html", {"request": request, "variant": None, "edit": False})
+    return templates.TemplateResponse(request, "variant_form.html", {"variant": None, "edit": False})
 
 
 @app.get("/variants/{variant_id}", response_class=HTMLResponse)
@@ -84,7 +83,7 @@ async def variant_detail(request: Request, variant_id: str, sid: str = Depends(r
     variant = state.get_variant(variant_id)
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
-    return templates.TemplateResponse("variant_detail.html", {"request": request, "variant": variant})
+    return templates.TemplateResponse(request, "variant_detail.html", {"variant": variant})
 
 
 @app.get("/variants/{variant_id}/edit", response_class=HTMLResponse)
@@ -92,7 +91,7 @@ async def edit_variant_page(request: Request, variant_id: str, sid: str = Depend
     variant = state.get_variant(variant_id)
     if not variant:
         raise HTTPException(status_code=404, detail="Variant not found")
-    return templates.TemplateResponse("variant_form.html", {"request": request, "variant": variant, "edit": True})
+    return templates.TemplateResponse(request, "variant_form.html", {"variant": variant, "edit": True})
 
 
 # --- API Routes ---
