@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Atlas — {% if edit %}Edit{% else %}New{% endif %} Variant{% endblock %}
+{% block body %}
+<div class="min-h-full">
+    <!-- Top Nav -->
+    <nav class="bg-surface-800/80 backdrop-blur border-b border-gray-700/50 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <a href="/dashboard" class="text-gray-400 hover:text-white transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+                    </a>
+                    <span class="text-lg font-semibold text-white">{% if edit %}Edit Variant{% else %}New Persona Variant{% endif %}</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 fade-in">
+        <form method="POST" action="{% if edit %}/api/variants/{{ variant.id }}{% else %}/api/variants{% endif %}" class="space-y-8">
+
+            <!-- Identity Section -->
+            <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-6">
+                <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-5 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-atlas-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/></svg>
+                    Drone Identity
+                </h3>
+                <div class="space-y-5">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-300 mb-2">Variant Name</label>
+                        <input type="text" name="name" id="name" required
+                            value="{{ variant.name if variant else '' }}"
+                            class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
+                            placeholder="e.g., Security Sweep Alpha">
+                    </div>
+                    <div>
+                        <label for="persona_identity" class="block text-sm font-medium text-gray-300 mb-2">Persona Identity</label>
+                        <textarea name="persona_identity" id="persona_identity" rows="4" required
+                            class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition resize-y"
+                            placeholder="Describe the persona's role, expertise, behavioral traits, and mission parameters…">{{ variant.persona_identity if variant else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAG Configuration -->
+            <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-6">
+                <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-5 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-atlas-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>
+                    RAG Configuration
+                </h3>
+                <div class="space-y-5">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="rag_enabled" class="w-4 h-4 rounded bg-surface-950 border-gray-600 text-atlas-500 focus:ring-atlas-500 focus:ring-offset-0"
+                            {{ 'checked' if variant and variant.rag_config.enabled else '' }}>
+                        <span class="text-sm text-gray-300">Enable RAG Pipeline</span>
+                    </label>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Endpoint URL</label>
+                        <input type="url" name="rag_endpoint_url"
+                            value="{{ variant.rag_config.endpoint_url if variant else '' }}"
+                            class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
+                            placeholder="https://your-vector-db.example.com/api">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+                            <input type="password" name="rag_api_key"
+                                value="{{ variant.rag_config.api_key if variant else '' }}"
+                                class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
+                                placeholder="sk-...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Collection Name</label>
+                            <input type="text" name="rag_collection_name"
+                                value="{{ variant.rag_config.collection_name if variant else '' }}"
+                                class="w-full px-4 py-3 bg-surface-950 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-atlas-500 focus:border-transparent outline-none transition"
+                                placeholder="security-intel">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP Integration -->
+            <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-6">
+                <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-5 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-atlas-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.1-5.1m0 0L11.42 5M6.32 10.07h11.36"/></svg>
+                    MCP Tool Integration
+                </h3>
+                <p class="text-sm text-gray-400 mb-5">Select tools this drone variant can access via the Model Context Protocol.</p>
+                <div class="grid grid-cols-2 gap-3">
+                    {% set tools = [
+                        ("mcp_web_search", "Web Search", "Search the web for intelligence"),
+                        ("mcp_file_analysis", "File Analysis", "Analyze documents and files"),
+                        ("mcp_email_integration", "Email Integration", "Send and manage emails"),
+                        ("mcp_calendar_sync", "Calendar Sync", "Access calendar events"),
+                        ("mcp_code_execution", "Code Execution", "Run code in sandboxed env"),
+                        ("mcp_data_extraction", "Data Extraction", "Extract structured data"),
+                        ("mcp_image_generation", "Image Generation", "Generate images from prompts"),
+                        ("mcp_memory_access", "Memory Access", "Read/write persistent memory"),
+                    ] %}
+                    {% for field, label, desc in tools %}
+                    <label class="flex items-start gap-3 p-3 rounded-lg bg-surface-950/50 border border-gray-700/30 hover:border-atlas-500/30 cursor-pointer transition">
+                        <input type="checkbox" name="{{ field }}" class="mt-0.5 w-4 h-4 rounded bg-surface-950 border-gray-600 text-atlas-500 focus:ring-atlas-500 focus:ring-offset-0"
+                            {% if variant %}
+                                {% set mcp = variant.mcp_integration %}
+                                {% if field == 'mcp_web_search' and mcp.web_search %}checked{% endif %}
+                                {% if field == 'mcp_file_analysis' and mcp.file_analysis %}checked{% endif %}
+                                {% if field == 'mcp_email_integration' and mcp.email_integration %}checked{% endif %}
+                                {% if field == 'mcp_calendar_sync' and mcp.calendar_sync %}checked{% endif %}
+                                {% if field == 'mcp_code_execution' and mcp.code_execution %}checked{% endif %}
+                                {% if field == 'mcp_data_extraction' and mcp.data_extraction %}checked{% endif %}
+                                {% if field == 'mcp_image_generation' and mcp.image_generation %}checked{% endif %}
+                                {% if field == 'mcp_memory_access' and mcp.memory_access %}checked{% endif %}
+                            {% endif %}>
+                        <div>
+                            <span class="text-sm font-medium text-gray-200">{{ label }}</span>
+                            <p class="text-xs text-gray-500 mt-0.5">{{ desc }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center justify-end gap-3">
+                <a href="/dashboard" class="px-5 py-2.5 text-sm text-gray-400 hover:text-white transition">Cancel</a>
+                <button type="submit" class="px-6 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
+                    {% if edit %}Update Variant{% else %}Create Variant{% endif %}
+                </button>
+            </div>
+        </form>
+    </main>
+</div>
+{% endblock %}
