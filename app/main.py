@@ -3,7 +3,6 @@ from fastapi import FastAPI, Request, Response, HTTPException, Depends, Cookie, 
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from typing import Optional, List
 
 from app.models import PersonaVariant, PersonaVariantCreate, PersonaVariantUpdate, SecretEntry
 from app.state import state
@@ -14,15 +13,13 @@ app = FastAPI(title="Atlas AI Orchestration Hub", version="1.1.0")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-def require_auth(session_id: Optional[str] = Cookie(None)):
+def require_auth(session_id: str = Cookie(None)):
     if not session_id or not state.is_authenticated(session_id):
         raise HTTPException(status_code=401, detail="Not authenticated")
     return session_id
 
-# --- Pages ---
-
 @app.get("/", response_class=HTMLResponse)
-async def landing(request: Request, session_id: Optional[str] = Cookie(None)):
+async def landing(request: Request, session_id: str = Cookie(None)):
     if session_id and state.is_authenticated(session_id):
         return RedirectResponse(url="/dashboard", status_code=302)
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
@@ -54,8 +51,6 @@ async def variant_detail(request: Request, variant_id: str, sid: str = Depends(r
 async def warchest_page(request: Request, sid: str = Depends(require_auth)):
     return templates.TemplateResponse("warchest.html", {"request": request, "secrets": state.get_secrets()})
 
-# --- Actions ---
-
 @app.post("/api/variants/{variant_id}/tasks")
 async def assign_task(variant_id: str, description: str = Form(...), sid: str = Depends(require_auth)):
     state.add_task(variant_id, description)
@@ -66,11 +61,8 @@ async def add_secret(key: str = Form(...), value: str = Form(...), description: 
     state.add_secret(SecretEntry(key=key, value=value, description=description))
     return RedirectResponse(url="/warchest", status_code=303)
 
-# --- Master Bridge (Sync) ---
-
 @app.get("/api/master/sync")
 async def sync_state():
-    """Endpoint for Atlas to fetch the current fleet state and pending tasks."""
     return {
         "fleet": state.list_variants(),
         "warchest": state.get_secrets(),
@@ -79,7 +71,6 @@ async def sync_state():
 
 @app.post("/api/master/task-update")
 async def master_task_update(variant_id: str, task_id: str, status: str, result: str = None):
-    """Endpoint for Atlas to post task results back to the Hub."""
     state.update_task(variant_id, task_id, status, result)
     return {"status": "ok"}
 
