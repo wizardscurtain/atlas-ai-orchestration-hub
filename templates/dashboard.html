@@ -2,7 +2,6 @@
 {% block title %}Atlas — Command Center{% endblock %}
 {% block body %}
 <div class="min-h-full">
-    <!-- Top Nav -->
     <nav class="bg-surface-800/80 backdrop-blur border-b border-gray-700/50 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -15,237 +14,76 @@
                     <span class="text-lg font-semibold text-white">Atlas Command Center</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="flex items-center gap-2 text-sm text-green-400">
-                        <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
-                        {{ state.system_health | capitalize }}
-                    </span>
-                    <a href="/auth/logout" data-testid="logout-link" class="text-sm text-gray-400 hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-gray-700/50">Logout</a>
+                    <a href="/warchest" class="text-sm text-atlas-400 hover:text-white transition px-3 py-1.5 rounded-lg border border-atlas-500/20 bg-atlas-500/5 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15V17M18 17V7C18 5.89543 17.1046 5 16 5H6C4.89543 5 4 5.89543 4 7V17M12 11V13M8 17H16"/></svg>
+                        Warchest ({{ state.secrets_count }})
+                    </a>
+                    <a href="/auth/logout" class="text-sm text-gray-400 hover:text-white transition px-3 py-1.5 rounded-lg hover:bg-gray-700/50">Logout</a>
                 </div>
             </div>
         </div>
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 fade-in" data-testid="dashboard-stats-grid">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8 fade-in">
             <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-5">
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Total Drones</p>
-                <p id="stat-total-variants" data-testid="stat-total-variants" class="text-2xl font-bold text-white">{{ state.total_variants }}</p>
+                <p class="text-2xl font-bold text-white">{{ state.total_variants }}</p>
             </div>
             <div class="bg-surface-800 rounded-xl border border-green-500/20 p-5 glow-green">
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Active</p>
-                <p id="stat-active-variants" data-testid="stat-active-variants" class="text-2xl font-bold text-green-400">{{ state.active_variants }}</p>
+                <p class="text-2xl font-bold text-green-400">{{ state.active_variants }}</p>
             </div>
             <div class="bg-surface-800 rounded-xl border border-blue-500/20 p-5 glow-blue">
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Deployed</p>
-                <p id="stat-deployed-variants" data-testid="stat-deployed-variants" class="text-2xl font-bold text-blue-400">{{ state.deployed_variants }}</p>
+                <p class="text-2xl font-bold text-blue-400">{{ state.deployed_variants }}</p>
             </div>
             <div class="bg-surface-800 rounded-xl border border-amber-500/20 p-5 glow-amber">
-                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">MCP Tools</p>
-                <p id="stat-total-tools" data-testid="stat-total-tools" class="text-2xl font-bold text-amber-400">{{ state.total_mcp_tools_enabled }}</p>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Completed</p>
+                <p class="text-2xl font-bold text-amber-400">{{ state.total_tasks_completed }}</p>
             </div>
             <div class="bg-surface-800 rounded-xl border border-gray-700/50 p-5">
-                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">RAG Endpoints</p>
-                <p id="stat-rag-endpoints" data-testid="stat-rag-endpoints" class="text-2xl font-bold text-white">{{ state.rag_endpoints_configured }}</p>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">System Status</p>
+                <p class="text-xs font-bold text-green-400 mt-2 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
+                    {{ state.system_health | upper }}
+                </p>
             </div>
         </div>
 
-        <!-- Header + Action -->
         <div class="flex items-center justify-between mb-6 fade-in">
             <div>
                 <h2 class="text-xl font-semibold text-white">Persona Variants</h2>
-                <p class="text-sm text-gray-400 mt-1">Manage your specialized AI drone fleet</p>
+                <p class="text-sm text-gray-400 mt-1">Specialized Red Team Fleet</p>
             </div>
-            <a href="/variants/new"
-                data-testid="new-variant-link" class="inline-flex items-center gap-2 px-5 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
+            <a href="/variants/new" class="inline-flex items-center gap-2 px-5 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                New Variant
+                Deploy New Agent
             </a>
         </div>
 
-        <!-- Variants Grid -->
-        <div id="variants-collection" data-testid="dashboard-variants-container">
-        {% if variants %}
-        <div id="variants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
             {% for v in variants %}
-            <a href="/variants/{{ v.id }}" data-testid="variant-card-{{ v.id }}" class="card-hover bg-surface-800 rounded-xl border border-gray-700/50 p-5 block">
+            <a href="/variants/{{ v.id }}" class="card-hover bg-surface-800 rounded-xl border border-gray-700/50 p-5 block">
                 <div class="flex items-start justify-between mb-3">
                     <h3 class="font-semibold text-white text-lg truncate pr-2">{{ v.name }}</h3>
-                    {% if v.status == 'active' %}
-                    <span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
-                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full pulse-dot"></span>Active
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono 
+                        {% if v.status == 'active' %}bg-green-500/10 text-green-400
+                        {% elif v.status == 'deployed' %}bg-blue-500/10 text-blue-400
+                        {% else %}bg-gray-500/10 text-gray-400{% endif %}">
+                        {{ v.status | upper }}
                     </span>
-                    {% elif v.status == 'deployed' %}
-                    <span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        <span class="w-1.5 h-1.5 bg-blue-400 rounded-full pulse-dot"></span>Deployed
-                    </span>
-                    {% else %}
-                    <span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">
-                        Inactive
-                    </span>
-                    {% endif %}
                 </div>
-                <p class="text-sm text-gray-400 line-clamp-2 mb-4">{{ v.persona_identity[:120] }}{% if v.persona_identity|length > 120 %}…{% endif %}</p>
-                <div class="flex items-center gap-3 text-xs text-gray-500">
-                    {% set tool_count = [v.mcp_integration.web_search, v.mcp_integration.file_analysis, v.mcp_integration.email_integration, v.mcp_integration.calendar_sync, v.mcp_integration.code_execution, v.mcp_integration.data_extraction, v.mcp_integration.image_generation, v.mcp_integration.memory_access] | select | list | length %}
+                <p class="text-xs text-gray-400 line-clamp-3 mb-4 h-12">{{ v.persona_identity }}</p>
+                <div class="flex items-center gap-3 text-[10px] text-gray-500 border-t border-gray-700/50 pt-4">
                     <span class="flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.1-5.1m0 0L11.42 5M6.32 10.07h11.36"/></svg>
-                        {{ tool_count }} tools
+                        Tasks: {{ v.tasks | length }}
                     </span>
-                    {% if v.rag_config.enabled %}
-                    <span class="flex items-center gap-1 text-atlas-400">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>
-                        RAG
-                    </span>
-                    {% endif %}
-                    <span class="ml-auto">Created {{ v.created_at[:10] }}</span>
+                    <span class="ml-auto">Active: {{ v.last_active[:10] if v.last_active else 'N/A' }}</span>
                 </div>
             </a>
             {% endfor %}
         </div>
-        {% else %}
-        <div id="variants-empty-state" data-testid="dashboard-empty-state" class="bg-surface-800 rounded-xl border border-gray-700/50 border-dashed p-16 text-center fade-in">
-            <svg class="w-12 h-12 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-            </svg>
-            <p class="text-gray-400 mb-2">No persona variants yet</p>
-            <p class="text-sm text-gray-500 mb-6">Create your first AI drone to get started</p>
-            <a href="/variants/new" data-testid="create-first-variant-link" class="inline-flex items-center gap-2 px-5 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                Create First Variant
-            </a>
-        </div>
-        {% endif %}
-        </div>
     </main>
 </div>
-<script>
-    (() => {
-        const stats = {
-            total: document.getElementById('stat-total-variants'),
-            active: document.getElementById('stat-active-variants'),
-            deployed: document.getElementById('stat-deployed-variants'),
-            tools: document.getElementById('stat-total-tools'),
-            rag: document.getElementById('stat-rag-endpoints')
-        };
-        const variantsCollection = document.getElementById('variants-collection');
-        const escapeHtml = (value) => String(value ?? '')
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#39;');
-
-        const truncate = (value, maxLength = 120) => {
-            if (!value) return '';
-            return value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
-        };
-
-        const statusBadge = (status) => {
-            if (status === 'active') {
-                return '<span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20"><span class="w-1.5 h-1.5 bg-green-400 rounded-full pulse-dot"></span>Active</span>';
-            }
-            if (status === 'deployed') {
-                return '<span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"><span class="w-1.5 h-1.5 bg-blue-400 rounded-full pulse-dot"></span>Deployed</span>';
-            }
-            return '<span class="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20">Inactive</span>';
-        };
-
-        const renderVariantCard = (variant) => {
-            const tools = variant.mcp_integration || {};
-            const toolCount = [
-                tools.web_search,
-                tools.file_analysis,
-                tools.email_integration,
-                tools.calendar_sync,
-                tools.code_execution,
-                tools.data_extraction,
-                tools.image_generation,
-                tools.memory_access,
-            ].filter(Boolean).length;
-            const createdAt = escapeHtml((variant.created_at || '').slice(0, 10));
-            const ragChip = variant.rag_config?.enabled
-                ? '<span class="flex items-center gap-1 text-atlas-400"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/></svg>RAG</span>'
-                : '';
-
-            return `
-                <a href="/variants/${encodeURIComponent(variant.id)}" data-testid="variant-card-${escapeHtml(variant.id)}" class="card-hover bg-surface-800 rounded-xl border border-gray-700/50 p-5 block">
-                    <div class="flex items-start justify-between mb-3 gap-3">
-                        <h3 class="font-semibold text-white text-lg truncate pr-2">${escapeHtml(variant.name)}</h3>
-                        ${statusBadge(variant.status)}
-                    </div>
-                    <p class="text-sm text-gray-400 line-clamp-2 mb-4">${escapeHtml(truncate(variant.persona_identity))}</p>
-                    <div class="flex items-center gap-3 text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.1-5.1m0 0L11.42 5M6.32 10.07h11.36"/></svg>
-                            ${toolCount} tools
-                        </span>
-                        ${ragChip}
-                        <span class="ml-auto">Created ${createdAt || '—'}</span>
-                    </div>
-                </a>
-            `;
-        };
-
-        const renderEmptyState = () => `
-            <div id="variants-empty-state" data-testid="dashboard-empty-state" class="bg-surface-800 rounded-xl border border-gray-700/50 border-dashed p-16 text-center fade-in">
-                <svg class="w-12 h-12 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-                </svg>
-                <p class="text-gray-400 mb-2">No persona variants yet</p>
-                <p class="text-sm text-gray-500 mb-6">Create your first AI drone to get started</p>
-                <a href="/variants/new" data-testid="create-first-variant-link" class="inline-flex items-center gap-2 px-5 py-2.5 bg-atlas-600 hover:bg-atlas-500 text-white font-medium rounded-xl transition text-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                    Create First Variant
-                </a>
-            </div>
-        `;
-
-        const renderVariants = (variants) => {
-            if (!variants.length) {
-                variantsCollection.innerHTML = renderEmptyState();
-                return;
-            }
-
-            variantsCollection.innerHTML = `
-                <div id="variants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
-                    ${variants.map(renderVariantCard).join('')}
-                </div>
-            `;
-        };
-
-        const applySnapshot = (snapshot) => {
-            const state = snapshot.state || {};
-            const variants = snapshot.variants || [];
-            stats.total.textContent = state.total_variants ?? 0;
-            stats.active.textContent = state.active_variants ?? 0;
-            stats.deployed.textContent = state.deployed_variants ?? 0;
-            stats.tools.textContent = state.total_mcp_tools_enabled ?? 0;
-            stats.rag.textContent = state.rag_endpoints_configured ?? 0;
-            renderVariants(variants);
-            window.AtlasSyncStatus?.setSyncStatus('success', 'Fleet data is up to date.', true);
-        };
-
-        const refreshDashboard = async () => {
-            window.AtlasSyncStatus?.setSyncStatus('syncing', 'Refreshing fleet data...');
-            try {
-                const response = await fetch('/api/dashboard-snapshot', {
-                    cache: 'no-store',
-                    headers: { 'Cache-Control': 'no-cache' }
-                });
-                if (!response.ok) {
-                    throw new Error(`Status ${response.status}`);
-                }
-                applySnapshot(await response.json());
-            } catch (error) {
-                console.debug('Dashboard sync skipped', error);
-                window.AtlasSyncStatus?.setSyncStatus('error', 'Fleet data refresh failed. Retrying soon.');
-            }
-        };
-
-        window.AtlasSyncStatus?.setSyncStatus('syncing', 'Preparing fleet sync...');
-        window.setTimeout(refreshDashboard, 4000);
-        window.setInterval(refreshDashboard, 15000);
-    })();
-</script>
 {% endblock %}

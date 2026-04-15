@@ -1,12 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import Optional
-from datetime import datetime, timezone
+from typing import Optional, List, Dict, Any
+from datetime import datetime
 import uuid
-
-
-def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
 
 class MCPIntegration(BaseModel):
     web_search: bool = False
@@ -18,13 +13,19 @@ class MCPIntegration(BaseModel):
     image_generation: bool = False
     memory_access: bool = False
 
-
 class RAGConfiguration(BaseModel):
     endpoint_url: str = ""
     api_key: str = ""
     collection_name: str = ""
     enabled: bool = False
 
+class Task(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    description: str
+    status: str = "pending" # pending, running, completed, failed
+    result: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    completed_at: Optional[str] = None
 
 class PersonaVariant(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -32,32 +33,23 @@ class PersonaVariant(BaseModel):
     persona_identity: str
     rag_config: RAGConfiguration = Field(default_factory=RAGConfiguration)
     mcp_integration: MCPIntegration = Field(default_factory=MCPIntegration)
-    status: str = "inactive"  # inactive, active, deployed
-    created_at: str = Field(default_factory=utc_now_iso)
+    status: str = "inactive"
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     last_active: Optional[str] = None
-    mission_log: list[str] = Field(default_factory=list)
-
-
-class PersonaVariantCreate(BaseModel):
-    name: str
-    persona_identity: str
-    rag_config: RAGConfiguration = Field(default_factory=RAGConfiguration)
-    mcp_integration: MCPIntegration = Field(default_factory=MCPIntegration)
-
-
-class PersonaVariantUpdate(BaseModel):
-    name: Optional[str] = None
-    persona_identity: Optional[str] = None
-    rag_config: Optional[RAGConfiguration] = None
-    mcp_integration: Optional[MCPIntegration] = None
-    status: Optional[str] = None
-
+    mission_log: List[str] = Field(default_factory=list)
+    tasks: List[Task] = Field(default_factory=list)
 
 class CentralState(BaseModel):
     total_variants: int = 0
     active_variants: int = 0
     deployed_variants: int = 0
-    total_mcp_tools_enabled: int = 0
-    rag_endpoints_configured: int = 0
+    total_tasks_completed: int = 0
     system_health: str = "operational"
     last_sweep: Optional[str] = None
+    secrets_count: int = 0
+
+class SecretEntry(BaseModel):
+    key: str
+    value: str
+    description: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
